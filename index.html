@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng Thí Nghiệm Vật Lý: Lực Căng Dây</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* MÀU SẮC CHỦ ĐẠO */
+            --primary: #2563EB;       
+            --primary-dark: #1E40AF;
+            --primary-light: #EFF6FF;
+            --accent-T: #DC2626;      
+            --accent-P: #059669;      
+            --text-main: #1E293B;
+            --text-sub: #64748B;
+            --bg-canvas: #F8FAFC;
+            --border: #E2E8F0;
+
+            /* FONT CHỮ MỚI */
+            --font-tech: 'Rajdhani', sans-serif; /* Dùng cho tiêu đề, số liệu */
+            --font-body: 'Roboto', sans-serif;   /* Dùng cho văn bản dài */
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: #F1F5F9;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 20px;
+            color: var(--text-main);
+            overflow: hidden; 
+        }
+
+        /* --- 1. MÀN HÌNH CHÀO (INTRO LOADER) --- */
+        .intro-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            
+            /* NỀN TẢI TRANG (Ảnh từ link bạn cung cấp) */
+            background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), 
+                        url('https://mathenlisa.edu.vn/uploads/news/2025_03/1_2.jpg');
+            background-size: cover; background-position: center;
+        }
+        
+        .intro-overlay.hidden { opacity: 0; transform: scale(1.1); pointer-events: none; }
+
+        .intro-content { text-align: center; color: white; animation: fadeIn 1s ease-out; }
+        .intro-icon { font-size: 4rem; margin-bottom: 20px; animation: bounce 2s infinite; }
+        
+        /* Font Rajdhani cho tiêu đề lớn */
+        .intro-title { 
+            font-family: var(--font-tech); font-size: 3.5rem; font-weight: 700; margin: 0; 
+            letter-spacing: 2px; text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(37, 99, 235, 0.8); /* Hiệu ứng neon */
+        }
+        .intro-sub { font-size: 1.1rem; opacity: 0.9; margin-bottom: 40px; font-weight: 400; letter-spacing: 1px; }
+        
+        .btn-start {
+            font-family: var(--font-tech); font-size: 1.3rem; letter-spacing: 1px;
+            background: var(--primary); color: white; border: none; 
+            padding: 15px 60px; font-weight: 700; text-transform: uppercase;
+            border-radius: 4px; cursor: pointer; /* Bo góc ít hơn để trông cứng cáp */
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.5); border: 1px solid #60A5FA;
+            transition: all 0.2s;
+        }
+        .btn-start:hover { transform: translateY(-3px); background: var(--primary-dark); box-shadow: 0 0 25px rgba(37, 99, 235, 0.8); }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* --- 2. GIAO DIỆN CHÍNH --- */
+        .lab-container {
+            width: 100%; max-width: 950px;
+            background: white; border-radius: 12px; /* Bo góc vừa phải */
+            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.2);
+            overflow: hidden; border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s;
+        }
+        .lab-container.visible { opacity: 1; transform: translateY(0); }
+
+        /* Header */
+        .header {
+            background: white; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; padding-right: 20px;
+        }
+        .tabs { display: flex; flex: 1; }
+        .tab-btn {
+            font-family: var(--font-tech); font-size: 1.1rem; letter-spacing: 0.5px;
+            flex: 1; padding: 20px; border: none; background: transparent;
+            font-weight: 700; color: var(--text-sub); cursor: pointer;
+            transition: 0.2s; border-bottom: 4px solid transparent; text-transform: uppercase;
+        }
+        .tab-btn:hover { color: var(--primary); background: var(--primary-light); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: var(--primary-light); }
+
+        /* Nút Help */
+        .btn-help {
+            font-family: var(--font-tech); width: 36px; height: 36px; border-radius: 50%;
+            border: 2px solid var(--border); background: white;
+            color: var(--text-sub); font-weight: 700; cursor: pointer; font-size: 1.2rem;
+            transition: 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-help:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Viewport */
+        .viewport {
+            height: 460px; position: relative; background: var(--bg-canvas);
+            background-image: 
+                linear-gradient(#E2E8F0 1px, transparent 1px),
+                linear-gradient(90deg, #E2E8F0 1px, transparent 1px);
+            background-size: 40px 40px; /* Lưới ô vuông kỹ thuật */
+            overflow: hidden;
+        }
+        .slide { width: 100%; height: 100%; display: none; }
+        .slide.active { display: block; }
+
+        /* Controls */
+        .controls {
+            padding: 20px 40px; background: white; border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; min-height: 70px;
+        }
+        .control-panel { display: none; align-items: center; gap: 20px; flex: 1; }
+        .control-panel.active { display: flex; }
+        
+        .label { font-family: var(--font-tech); font-weight: 700; color: var(--text-sub); font-size: 1.1rem; text-transform: uppercase; }
+
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; max-width: 220px; height: 4px; 
+            background: #94A3B8; border-radius: 2px; cursor: grab;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary);
+            border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
+            transform: translateY(-8px); transition: transform 0.1s;
+        }
+
+        .btn-action {
+            font-family: var(--font-tech); font-size: 1.1rem; letter-spacing: 0.5px;
+            background: var(--primary); color: white; border: none; padding: 10px 30px;
+            border-radius: 6px; font-weight: 700; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 4px 0 #1E40AF; /* Hiệu ứng nút nổi 3D */
+            transition: 0.1s; display: flex; align-items: center; gap: 8px; margin-left: auto;
+        }
+        .btn-action:hover { transform: translateY(-1px); background: #2563EB; }
+        .btn-action:active { transform: translateY(3px); box-shadow: 0 1px 0 #1E40AF; }
+        .btn-action.active-state { background: var(--accent-T); box-shadow: 0 4px 0 #991B1B; }
+        .btn-action.active-state:active { transform: translateY(3px); box-shadow: 0 1px 0 #991B1B; }
+
+        /* Knowledge Box */
+        .knowledge-box {
+            background: #ECFDF5; border-top: 1px solid #A7F3D0;
+            padding: 20px 40px; display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .k-title { 
+            font-family: var(--font-tech); color: #047857; font-weight: 700; font-size: 1.1rem; 
+            text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;
+        }
+        .k-content { font-family: var(--font-body); color: #065F46; font-size: 1rem; line-height: 1.5; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 3. MODAL HƯỚNG DẪN --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px);
+            z-index: 2000; display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        
+        .modal-content {
+            background: white; width: 90%; max-width: 500px;
+            border-radius: 12px; padding: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transform: scale(0.9); transition: transform 0.3s; border: 1px solid #E2E8F0;
+        }
+        .modal-overlay.show .modal-content { transform: scale(1); }
+
+        .modal-title { font-family: var(--font-tech); font-size: 1.5rem; font-weight: 700; color: var(--primary); text-transform: uppercase;}
+        .guide-step { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 15px; }
+        .step-num { 
+            font-family: var(--font-tech); background: var(--primary); color: white; width: 30px; height: 30px; 
+            border-radius: 4px; display: flex; align-items: center; justify-content: center; 
+            font-weight: 700; flex-shrink: 0; font-size: 1.1rem;
+        }
+        .step-text { font-size: 0.95rem; color: var(--text-main); line-height: 1.5; margin-top: 3px;}
+
+        /* SVG & Vector Styles */
+        svg { overflow: visible; width: 100%; height: 100%; }
+        .rope-line { stroke: #475569; stroke-width: 4; stroke-linecap: round; }
+        .monkey-rope { stroke: #D97706; stroke-width: 5; stroke-linecap: round; }
+        .vec-group { pointer-events: none; transition: opacity 0.4s ease; }
+        .vec-arrow { stroke-width: 5; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.2)); }
+        
+        /* Font chữ trong SVG */
+        .vec-label-box { fill: white; opacity: 0.95; rx: 4; stroke: #94A3B8; stroke-width: 1; }
+        .vec-text { font-family: var(--font-tech); font-weight: 700; font-size: 16px; text-anchor: middle; dominant-baseline: middle; }
+
+    </style>
+</head>
+<body>
+
+    <div class="intro-overlay" id="intro">
+        <div class="intro-content">
+            <div class="intro-icon">⚛️</div>
+            <h1 class="intro-title">PHÒNG THÍ NGHIỆM ẢO</h1>
+            <p class="intro-sub">MÔ PHỎNG LỰC CĂNG DÂY</p>
+            <button class="btn-start" onclick="enterLab()">BẮT ĐẦU</button>
+        </div>
+    </div>
+
+    <div class="lab-container" id="labApp">
+        <div class="header">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="setSlide(0)">1. VẬT TĨNH</button>
+                <button class="tab-btn" onclick="setSlide(1)">2. CON LẮC</button>
+                <button class="tab-btn" onclick="setSlide(2)">3. HỆ DÂY</button>
+            </div>
+            <button class="btn-help" onclick="toggleHelp(true)" title="Hướng dẫn">?</button>
+        </div>
+
+        <div class="viewport">
+            <svg viewBox="0 0 900 460">
+                <defs>
+                    <marker id="arrow-T" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#DC2626"/></marker>
+                    <marker id="arrow-P" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#059669"/></marker>
+                    <filter id="shadow"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.15"/></filter>
+                </defs>
+
+                <g id="slide-1" class="slide active">
+                    <rect x="350" y="0" width="200" height="20" fill="#CBD5E1"/>
+                    <line x1="450" y1="20" x2="450" y2="200" class="rope-line"/>
+                    <g transform="translate(450, 200)" filter="url(#shadow)">
+                        <rect x="-15" y="0" width="30" height="25" fill="#475569" rx="4"/>
+                        <path d="M-35,25 Q-45,60 0,75 Q45,60 35,25 Z" fill="#FDE047" stroke="#F59E0B" stroke-width="2"/>
+                        <path d="M-10,45 Q0,35 10,45" fill="none" stroke="#D97706" stroke-width="2"/>
+                    </g>
+                    <g id="vec-1" class="vec-group" style="opacity: 0">
+                        <line x1="450" y1="200" x2="450" y2="100" stroke="#DC2626" class="vec-arrow" marker-end="url(#arrow-T)"/>
+                        <g transform="translate(420, 150)"><rect x="-12" y="-14" width="24" height="28" class="vec-label-box"/><text x="0" y="1" class="vec-text" fill="#DC2626">T</text></g>
+                        <line x1="450" y1="275" x2="450" y2="375" stroke="#059669" class="vec-arrow" marker-end="url(#arrow-P)"/>
+                        <g transform="translate(420, 325)"><rect x="-12" y="-14" width="24" height="28" class="vec-label-box"/><text x="0" y="1" class="vec-text" fill="#059669">P</text></g>
+                    </g>
+                </g>
+
+                <g id="slide-2" class="slide">
+                    <rect x="350" y="0" width="200" height="20" fill="#CBD5E1"/>
+                    <g id="pendulum-sys" transform="rotate(0, 450, 20)">
+                        <line x1="450" y1="20" x2="450" y2="350" class="rope-line"/>
+                        <circle cx="450" cy="350" r="30" fill="#94A3B8" stroke="#475569" stroke-width="2" filter="url(#shadow)"/>
+                        <g id="vec-2-T" class="vec-group" style="opacity:0">
+                            <line x1="450" y1="350" x2="450" y2="230" stroke="#DC2626" class="vec-arrow" marker-end="url(#arrow-T)"/>
+                            <g transform="translate(430, 290)"><rect x="-12" y="-14" width="24" height="28" class="vec-label-box"/><text x="0" y="1" class="vec-text" fill="#DC2626">T</text></g>
+                        </g>
+                        <g id="vec-2-P" class="vec-group" style="opacity:0" transform="rotate(0, 450, 350)">
+                            <line x1="450" y1="350" x2="450" y2="470" stroke="#059669" class="vec-arrow" marker-end="url(#arrow-P)"/>
+                            <g transform="translate(470, 410)"><rect x="-12" y="-14" width="24" height="28" class="vec-label-box"/><text x="0" y="1" class="vec-text" fill="#059669">P</text></g>
+                        </g>
+                    </g>
+                </g>
+
+                <g id="slide-3" class="slide">
+                    <rect x="50" y="50" width="20" height="410" fill="#64748B" rx="4"/>
+                    <rect x="830" y="50" width="20" height="410" fill="#64748B" rx="4"/>
+                    <line id="rope-left" x1="70" y1="70" x2="450" y2="200" class="monkey-rope"/>
+                    <line id="rope-right" x1="830" y1="70" x2="450" y2="200" class="monkey-rope"/>
+                    <g id="monkey-group" transform="translate(450, 200)" filter="url(#shadow)">
+                        <path d="M-15,50 Q-30,20 0,0" fill="none" stroke="#8D6E63" stroke-width="12" stroke-linecap="round"/>
+                        <circle cx="0" cy="0" r="10" fill="#5D4037"/>
+                        <g transform="translate(0, 50)">
+                            <path d="M10,40 Q30,60 20,10" fill="none" stroke="#8D6E63" stroke-width="6" stroke-linecap="round">
+                                <animate attributeName="d" values="M10,40 Q30,60 20,10; M10,40 Q50,50 30,20; M10,40 Q30,60 20,10" dur="2s" repeatCount="indefinite"/>
+                            </path>
+                            <ellipse cx="0" cy="20" rx="30" ry="35" fill="#8D6E63"/>
+                            <ellipse cx="0" cy="25" rx="20" ry="25" fill="#EFEBE9"/>
+                            <path d="M-15,45 Q-25,65 -5,60" fill="none" stroke="#8D6E63" stroke-width="10" stroke-linecap="round"/>
+                            <path d="M15,45 Q25,65 5,60" fill="none" stroke="#8D6E63" stroke-width="10" stroke-linecap="round"/>
+                            <g transform="translate(0, -15)">
+                                <circle cx="-24" cy="-5" r="9" fill="#8D6E63"/> <circle cx="24" cy="-5" r="9" fill="#8D6E63"/>
+                                <circle cx="0" cy="0" r="30" fill="#8D6E63"/> <path d="M-25,-5 Q0,20 25,-5 Q20,-25 0,-25 Q-20,-25 -25,-5" fill="#EFEBE9"/>
+                                <circle cx="-10" cy="-5" r="3" fill="#3E2723"/> <circle cx="10" cy="-5" r="3" fill="#3E2723"/>
+                                <path d="M-6,8 Q0,12 6,8" fill="none" stroke="#3E2723" stroke-width="2"/>
+                            </g>
+                        </g>
+                    </g>
+                    <g id="vec-3" class="vec-group" style="opacity: 0" transform="translate(450, 200)">
+                        <g transform="translate(180, -80)">
+                            <line x1="0" y1="0" x2="50" y2="0" stroke="#94A3B8" stroke-width="2"/>
+                            <line x1="0" y1="0" x2="0" y2="-50" stroke="#94A3B8" stroke-width="2"/>
+                            <text x="55" y="5" font-size="12" fill="#94A3B8" font-family="var(--font-tech)" font-weight="bold">x</text>
+                            <text x="-10" y="-55" font-size="12" fill="#94A3B8" font-family="var(--font-tech)" font-weight="bold">y</text>
+                        </g>
+                        <line id="vec-t1" x1="0" y1="0" x2="-100" y2="-50" stroke="#DC2626" class="vec-arrow" marker-end="url(#arrow-T)"/>
+                        <g id="lbl-t1" transform="translate(-110, -60)"><rect x="-12" y="-14" width="24" height="28" class="vec-label-box"/><text x="0" y="1" class="vec-text" fill="#DC2626">T1</text></g>
+                        <line id="vec-t2" x1="0" y1="0" x2="100" y2="-50" stroke="#DC2626" class="vec-arrow" marker-end="url(#arrow-T)"/>
+                        <g id="lbl-t2" transform="translate(110, -60)"><rect x="-12" y="-14" width="24" height="28" class="vec-label-box"/><text x="0" y="1" class="vec-text" fill="#DC2626">T2</text></g>
+                        <line x1="0" y1="0" x2="0" y2="120" stroke="#059669" class="vec-arrow" marker-end="url(#arrow-P)"/>
+                        <g transform="translate(0, 140)"><rect x="-12" y="-14" width="24" height="28" class="vec-label-box"/><text x="0" y="1" class="vec-text" fill="#059669">P</text></g>
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <div class="controls">
+            <div id="ctrl-1" class="control-panel active">
+                <span class="label">TRẠNG THÁI: CÂN BẰNG</span>
+                <button class="btn-action" onclick="toggleV1(this)">🔦 PHÂN TÍCH LỰC</button>
+            </div>
+            <div id="ctrl-2" class="control-panel">
+                <span class="label">GÓC NGHIÊNG:</span>
+                <input type="range" min="-45" max="45" value="0" oninput="updatePendulum(this.value)">
+                <button class="btn-action" onclick="toggleV2(this)">👁️ HIỆN VECTOR</button>
+            </div>
+            <div id="ctrl-3" class="control-panel">
+                <span class="label">ĐỘ VÕNG DÂY:</span>
+                <input type="range" min="100" max="350" value="200" oninput="updateMonkey(this.value)">
+                <button class="btn-action" onclick="toggleV3(this)">🔍 SOI LỰC CĂNG</button>
+            </div>
+        </div>
+
+        <div class="knowledge-box" id="k-box">
+            <div class="k-title">💡 KIẾN THỨC CỐT LÕI</div>
+            <div class="k-content" id="k-content"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">HƯỚNG DẪN SỬ DỤNG</div>
+                <button class="btn-close" onclick="toggleHelp(false)" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">×</button>
+            </div>
+            <div class="guide-step">
+                <div class="step-num">1</div>
+                <div class="step-text">Chọn các <b>THÍ NGHIỆM</b> (1, 2, 3) trên thanh công cụ phía trên.</div>
+            </div>
+            <div class="guide-step">
+                <div class="step-num">2</div>
+                <div class="step-text">Sử dụng <b>THANH TRƯỢT</b> để thay đổi góc nghiêng hoặc độ chùng của dây.</div>
+            </div>
+            <div class="guide-step">
+                <div class="step-num">3</div>
+                <div class="step-text">Bấm nút <b>HIỆN LỰC</b> để xem các Vector lực xuất hiện như thế nào.</div>
+            </div>
+            <div class="guide-step">
+                <div class="step-num">4</div>
+                <div class="step-text">Đọc phần <b>KIẾN THỨC</b> hiện ra bên dưới để ghi nhớ bài học.</div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- INTRO LOGIC ---
+    function enterLab() {
+        const intro = document.getElementById('intro');
+        const app = document.getElementById('labApp');
+        
+        intro.classList.add('hidden');
+        setTimeout(() => {
+            app.classList.add('visible');
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
+
+    // --- NAVIGATION ---
+    function setSlide(idx) {
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+
+        document.querySelectorAll('.slide').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.slide')[idx].style.display = 'block';
+
+        document.querySelectorAll('.control-panel').forEach(el => el.classList.remove('active'));
+        document.getElementById('ctrl-' + (idx+1)).classList.add('active');
+
+        document.getElementById('k-box').style.display = 'none';
+        document.querySelectorAll('.btn-action').forEach(btn => btn.classList.remove('active-state'));
+        document.querySelectorAll('.vec-group').forEach(el => el.style.opacity = 0);
+        
+        // Reset Text
+        document.querySelector('#ctrl-1 button').textContent = "🔦 PHÂN TÍCH LỰC";
+        document.querySelector('#ctrl-2 button').textContent = "👁️ HIỆN VECTOR";
+        document.querySelector('#ctrl-3 button').textContent = "🔍 SOI LỰC CĂNG";
+    }
+
+    // --- HELP MODAL ---
+    function toggleHelp(show) {
+        const modal = document.getElementById('helpModal');
+        if (show) modal.classList.add('show');
+        else modal.classList.remove('show');
+    }
+
+    // --- KNOWLEDGE BOX ---
+    function showKnowledge(text) {
+        const box = document.getElementById('k-box');
+        const content = document.getElementById('k-content');
+        content.innerHTML = text;
+        box.style.display = 'block';
+    }
+    function hideKnowledge() {
+        document.getElementById('k-box').style.display = 'none';
+    }
+
+    // --- PHYSICS LOGIC ---
+    // Slide 1
+    function toggleV1(btn) {
+        const el = document.getElementById('vec-1');
+        const isOn = el.style.opacity == 1;
+        el.style.opacity = isOn ? 0 : 1;
+        btn.classList.toggle('active-state');
+        if (!isOn) {
+            btn.textContent = "❌ TẮT TIA X";
+            showKnowledge("Khi vật đứng yên, <b>Lực căng dây (T)</b> có phương thẳng đứng, chiều hướng lên và cân bằng với Trọng lực (P).");
+        } else {
+            btn.textContent = "🔦 PHÂN TÍCH LỰC";
+            hideKnowledge();
+        }
+    }
+
+    // Slide 2
+    function updatePendulum(val) {
+        document.getElementById('pendulum-sys').setAttribute('transform', `rotate(${val}, 450, 20)`);
+        document.getElementById('vec-2-P').setAttribute('transform', `rotate(${-val}, 450, 350)`);
+    }
+    function toggleV2(btn) {
+        const t = document.getElementById('vec-2-T');
+        const p = document.getElementById('vec-2-P');
+        const isOn = t.style.opacity == 1;
+        t.style.opacity = isOn ? 0 : 1;
+        p.style.opacity = isOn ? 0 : 1;
+        btn.classList.toggle('active-state');
+        if(!isOn) {
+            btn.textContent = "❌ ẨN LỰC";
+            showKnowledge("Khi vật nghiêng, <b>Lực căng (T)</b> luôn có phương trùng với sợi dây. Trọng lực (P) luôn có phương thẳng đứng.");
+        } else {
+            btn.textContent = "👁️ HIỆN VECTOR";
+            hideKnowledge();
+        }
+    }
+
+    // Slide 3
+    function updateMonkey(sagY) {
+        const cx = 450; const pl = {x:70,y:70}; const pr = {x:830,y:70};
+        document.getElementById('rope-left').setAttribute('y2', sagY); document.getElementById('rope-right').setAttribute('y2', sagY);
+        document.getElementById('monkey-group').setAttribute('transform', `translate(${cx}, ${sagY})`);
+        document.getElementById('vec-3').setAttribute('transform', `translate(${cx}, ${sagY})`);
+        
+        // Update vectors
+        const len = 120;
+        const calcVec = (p) => {
+            const dx = p.x - cx; const dy = p.y - sagY;
+            const s = len / Math.sqrt(dx*dx + dy*dy);
+            return {x: dx*s, y: dy*s};
+        };
+        const v1 = calcVec(pl); const v2 = calcVec(pr);
+        
+        const setVec = (id, v) => {
+            document.getElementById('vec-'+id).setAttribute('x2', v.x);
+            document.getElementById('vec-'+id).setAttribute('y2', v.y);
+            document.getElementById('lbl-'+id).setAttribute('transform', `translate(${v.x + (v.x<0?-20:20)}, ${v.y-20})`);
+        };
+        setVec('t1', v1); setVec('t2', v2);
+    }
+
+    function toggleV3(btn) {
+        const el = document.getElementById('vec-3');
+        const isOn = el.style.opacity == 1;
+        el.style.opacity = isOn ? 0 : 1;
+        btn.classList.toggle('active-state');
+        if(!isOn) {
+            btn.textContent = "❌ KẾT THÚC";
+            showKnowledge("Tại điểm treo, các lực đồng quy. Lực căng dây hướng dọc theo dây kéo vật về phía điểm treo.");
+        } else {
+            btn.textContent = "🔍 SOI LỰC CĂNG";
+            hideKnowledge();
+        }
+    }
+
+    updateMonkey(200);
+</script>
+</body>
+</html>
